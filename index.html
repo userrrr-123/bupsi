@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puzzle Bupsii 💖</title>
+    <style>
+        body {
+            background-color: #ffe6e6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        h1 { color: #ff4d4d; margin-bottom: 5px; text-align: center; }
+        p#instructiuni { color: #555; margin-bottom: 20px; font-size: 1.1em; text-align: center; }
+
+        #start-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #ffe6e6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(255, 77, 77, 0.4);
+            transition: 0.3s;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #ff1a1a;
+            transform: scale(1.05);
+        }
+
+        #puzzle-board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px); 
+            grid-template-rows: repeat(3, 100px);   
+            gap: 2px;
+            background-color: #ff4d4d;
+            padding: 4px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            display: none; 
+            transition: gap 0.5s;
+        }
+
+        .piece {
+            width: 100px;
+            height: 100px;
+            background-image: url('poza.jpg'); 
+            background-size: 300px 300px;     
+            cursor: pointer;
+            box-sizing: border-box;
+            transition: transform 0.2s;
+        }
+
+        .piece.selected {
+            border: 3px solid #FFD700; 
+            transform: scale(0.9);
+            z-index: 10;
+        }
+
+        #mesaj-final {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            animation: pulse 1s infinite;
+        }
+
+        #mesaj-final h2 {
+            color: #ff1a1a;
+            margin: 0;
+            font-size: 2.2em;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen">
+        <h1>Pregatit pentru surpriza? </h1>
+        <button id="btn-start">Incepe</button>
+    </div>
+
+    <h1 id="titlu" style="display:none;">Refa poza noastra! 💖</h1>
+    <p id="instructiuni" style="display:none;">Da click pe o piesa, apoi pe alta pentru a le schimba intre ele.</p>
+
+    <div id="puzzle-board"></div>
+
+    <div id="mesaj-final">
+        <h2>Mi-e dor de tine BUPSIIIIII! 🥰</h2>
+    </div>
+
+    <audio id="muzica" src="melodie.mp3" loop></audio>
+
+    <script>
+        const board = document.getElementById('puzzle-board');
+        const startScreen = document.getElementById('start-screen');
+        const btnStart = document.getElementById('btn-start');
+        const muzica = document.getElementById('muzica');
+        const mesajFinal = document.getElementById('mesaj-final');
+        const titlu = document.getElementById('titlu');
+        const instructiuni = document.getElementById('instructiuni');
+
+        let piese = [];
+        let piesaSelectata = null;
+
+        btnStart.addEventListener('click', () => {
+            startScreen.style.display = 'none'; 
+            board.style.display = 'grid';  
+            titlu.style.display = 'block';
+            instructiuni.style.display = 'block';
+     
+            const secundaStart = 60; 
+            const secundaStop = 140; 
+
+            muzica.currentTime = secundaStart;
+            muzica.play();
+
+            muzica.addEventListener('timeupdate', function opresteSecventa() {
+                if (muzica.currentTime >= secundaStop) {
+    
+                    muzica.pause(); 
+                 
+                }
+            });
+            
+            creeazaPuzzle();
+        });
+
+        function creeazaPuzzle() {
+            let ordine = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+  
+            ordine.sort(() => Math.random() - 0.5);
+
+            for (let i = 0; i < 9; i++) {
+                let piece = document.createElement('div');
+                piece.classList.add('piece');
+       
+                let pozitieCorecta = ordine[i];
+                let randCorect = Math.floor(pozitieCorecta / 3);
+                let colCorect = pozitieCorecta % 3;
+                
+                piece.style.backgroundPosition = `-${colCorect * 100}px -${randCorect * 100}px`;
+                piece.dataset.indexCurent = i; 
+                piece.dataset.indexCorect = pozitieCorecta;
+
+                piece.addEventListener('click', onPieceClick);
+                board.appendChild(piece);
+                piese.push(piece);
+            }
+        }
+
+        function onPieceClick(e) {
+            let piesaClicata = e.target;
+
+            if (!piesaSelectata) {
+        
+                piesaSelectata = piesaClicata;
+                piesaSelectata.classList.add('selected');
+            } else {
+                let tempBgPos = piesaSelectata.style.backgroundPosition;
+                let tempIndexCorect = piesaSelectata.dataset.indexCorect;
+
+                piesaSelectata.style.backgroundPosition = piesaClicata.style.backgroundPosition;
+                piesaSelectata.dataset.indexCorect = piesaClicata.dataset.indexCorect;
+
+                piesaClicata.style.backgroundPosition = tempBgPos;
+                piesaClicata.dataset.indexCorect = tempIndexCorect;
+
+                piesaSelectata.classList.remove('selected');
+                piesaSelectata = null;
+
+                verificaCastig();
+            }
+        }
+
+        function verificaCastig() {
+            let castigat = true;
+            for (let i = 0; i < piese.length; i++) {
+                if (parseInt(piese[i].dataset.indexCurent) !== parseInt(piese[i].dataset.indexCorect)) {
+                    castigat = false;
+                    break;
+                }
+            }
+
+            if (castigat) {
+                board.style.gap = "0px";
+                board.style.backgroundColor = "transparent";
+                
+                mesajFinal.style.display = 'block';
+                instructiuni.style.display = 'none';
+            
+                piese.forEach(p => p.style.pointerEvents = "none");
+            }
+        }
+    </script>
+</body>
+</html>
